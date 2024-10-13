@@ -40,6 +40,10 @@ exports.AssessmentWithStudent = async (req, res) => {
       createdAt: new Date() // or use a default value if your schema provides one
     }));
 
+
+    // Check if the records already exist before inserting
+   
+
     console.log(assessmentRecords)
 
     // Insert the records into the database
@@ -73,6 +77,7 @@ exports.AssessmentWithStudent = async (req, res) => {
 
 
 
+
 exports.getStudentAssessment = async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
@@ -99,8 +104,8 @@ exports.getStudentAssessment = async (req, res) => {
       path: 'assessmentId', // Field to populate
       select: 'title description dueDate createdBy', // Fields to select from the populated document
       model: 'Assessment' // The model to populate from
-    })
-    .exec();
+    }).populate({ path: 'studentId', select: 'fullName emailId role', model: 'User' })
+      .exec();
     if (!assessment) {
       return res.status(200).json({ message: 'No assessment found for the given student ID.' });
     }
@@ -116,7 +121,7 @@ exports.getStudentAssessment = async (req, res) => {
 exports.updateStudentResult = async (req, res) => {
   try {
     const id = req.params.id; // The ID of the student assessment to update
-    const { assessmentId, studentId, feedback, score } = req.body; // The fields to update
+    const { assessmentId, studentId, feedback, score, total, attempted } = req.body; // The fields to update
     const token = req.headers.authorization?.split(' ')[1]; // Extract token from headers
 
     if (!token) {
@@ -141,7 +146,7 @@ exports.updateStudentResult = async (req, res) => {
     // Find and update the StudentAssessment document
     const updatedStudentAssessment = await StudentAssessment.findByIdAndUpdate(
       id,
-      { assessmentId, studentId, feedback, score },
+      { assessmentId, studentId, feedback, score, total, attempted: true },
       { new: true, runValidators: true } // Return the updated document and run validators
     );
 

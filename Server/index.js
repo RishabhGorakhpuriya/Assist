@@ -8,11 +8,19 @@ const questionRouter = require('./routes/Questions');
 const assessmentRouter = require('./routes/AssessmentRoutes');
 const studentAssessmentRouter = require('./routes/StudentAssessment');
 const assessmentQuestionRouter = require('./routes/AssessmentQustions');
+const UsersFeedbackRouter = require('./routes/UserFeedback');
 // const userListRouter = require('./routes/Auth');
 // const assignAssessmentRouter = require('./routes/AssignAssessment');
-dotenv.config();
 
 const app = express();
+app.use(cors({
+    origin: 'http://localhost:3000', // Allow only your frontend to access the API
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], // Allowed methods
+    allowedHeaders: ['Authorization', 'Content-Type'], // Allowed headers
+}));
+
+dotenv.config();
+
 const PORT = process.env.PORT || 4000;
 
 // Connect to MongoDB
@@ -21,14 +29,15 @@ connectToMongo();
 // Middleware
 app.use(cors());
 app.use(express.json());
-
+app.set("view engine", "ejs")
+app.use(express.urlencoded({extended:false}))
 // Use the router middleware
 app.use('/auth', authRouter);
 app.use('/api', questionRouter);
 app.use('/api/assessment', assessmentRouter);
 app.use('/api', studentAssessmentRouter)
 app.use('/api/assessmentQuestion', assessmentQuestionRouter);
-
+app.use('/api', UsersFeedbackRouter);
 
 // Start the server
 app.listen(PORT, () => {

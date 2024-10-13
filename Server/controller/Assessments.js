@@ -164,7 +164,7 @@ exports.getAssessmentByIds = async (req, res) => {
         }
 
         // Fetch the assessment to check if it exists and if the user is the creator
-        const assessments = await Assessment.find({ '_id': { $in: assessmentIds } });
+        const assessments = await Assessment.find({ '_id': { $in: assessmentIds } })
         if (!assessments) {
             return res.status(200).json({ message: 'Assessment not found.' });
         }
@@ -233,3 +233,33 @@ exports.getQuestionsByAssessmentId = async (req, res) => {
     }
   };
 
+  
+  exports.deleteAssessmentById = async (req, res) => {
+      const { id } = req.body; // Ensure you're sending the ID in the request body
+      try {
+          const token = req.headers.authorization?.split(' ')[1];
+          if (!token) {
+              return res.status(401).json({ message: 'No token provided' });
+          }
+  
+          let userId;
+          try {
+              const decoded = jwt.verify(token, process.env.SECRET_KEY);
+              userId = decoded.id;
+          } catch (error) {
+              return res.status(401).json({ message: 'Invalid token' });
+          }
+  
+          // Use findByIdAndDelete directly with the ID
+          const deleteAssessment = await Assessment.findByIdAndDelete(id);
+          if (deleteAssessment) {
+              return res.status(200).json({ message: 'Assessment deleted successfully' });
+          } else {
+              return res.status(404).json({ message: 'No assessment found for the provided ID' });
+          }
+      } catch (err) {
+          console.error('Error in deletion:', err); // Log the error for debugging
+          return res.status(500).json({ message: 'Server error', error: err.message });
+      }
+  };
+  

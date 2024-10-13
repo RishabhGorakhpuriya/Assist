@@ -1,36 +1,36 @@
-const express =  require('express');
+const express = require('express');
 const AssessmentsQuestions = require('../models/AssessmentQustions')
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 exports.getQuestionsByAssessmentId = async (req, res) => {
     try {
-      // Get the assessment ID from the request parameters
-      const { id } = req.params;
-      console.log('Assessment ID:', id);
-  
-      // Validate the assessment ID
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ message: 'Invalid assessment ID' });
-      }
-  
-      // Find questions by assessment ID
-      const questions = await AssessmentsQuestions.find({ assessment: id });
-  
-      // Check if questions are found
-      if (questions.length === 0) {
-        return res.status(200).json({ message: 'No questions found for this assessment' });
-      }
-  
-      // Respond with the list of questions
-      res.status(200).json(questions);
+        // Get the assessment ID from the request parameters
+        const { id } = req.params;
+        console.log('Assessment ID:', id);
+
+        // Validate the assessment ID
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: 'Invalid assessment ID' });
+        }
+
+        // Find questions by assessment ID
+        const questions = await AssessmentsQuestions.find({ assessment: id });
+
+        // Check if questions are found
+        if (questions.length === 0) {
+            return res.status(200).json({ message: 'No questions found for this assessment' });
+        }
+
+        // Respond with the list of questions
+        res.status(200).json(questions);
     } catch (err) {
-      console.error('Error retrieving questions:', err);
-      res.status(500).json({ message: 'Server error', error: err.message });
+        console.error('Error retrieving questions:', err);
+        res.status(500).json({ message: 'Server error', error: err.message });
     }
-  };
+};
 
 
-  exports.addQuestiontoAssessment = async (req, res) => {
+exports.addQuestiontoAssessment = async (req, res) => {
     try {
         // Extract and validate fields from request body
         const { question, options, answer, questionType, assessment } = req.body;
@@ -111,7 +111,7 @@ exports.updateAssessmentQuestion = async (req, res) => {
 
 exports.deleteAssessmentQuestion = async (req, res) => {
     try {
-        const id = req.params.id; // Retrieve the question ID from the request parameters
+        const { id } = req.body; // Retrieve the question IDs from the request body
 
         // Optionally, validate the token if required for authorization
         const token = req.headers.authorization?.split(' ')[1];
@@ -119,17 +119,24 @@ exports.deleteAssessmentQuestion = async (req, res) => {
             return res.status(401).json({ message: 'No token provided' });
         }
 
-        // Delete the question from the database
-        const deletedQuestion = await AssessmentsQuestions.findByIdAndDelete(id);
-
-        if (!deletedQuestion) {
-            return res.status(404).json({ message: 'Question not found' });
+        // Validate the incoming IDs
+        if (!id || !Array.isArray(id) || id.length === 0) {
+            return res.status(400).json({ message: 'Invalid or missing IDs' }); // Use res.status for 400 response
         }
 
-        // Respond with a success message
-        res.status(200).json({ message: 'Question deleted successfully' });
+        // Delete the questions from the database
+        const deletedQuestion = await AssessmentsQuestions.deleteMany({ _id: { $in: id } });
+
+        if (deletedQuestion.deletedCount  > 0) {
+            // Respond with a success message
+            return res.status(200).json({ message: 'Questions deleted successfully', deletedCount: deletedQuestion.deletedCount });
+        } else {
+            return res.status(404).json({ message: 'No questions found for the provided IDs' });
+        }
+
     } catch (err) {
         // Handle server errors
-        res.status(500).json({ message: 'Server error', error: err.message });
+        console.error('Error in deletion:', err); // Log the error for debugging
+        return res.status(500).json({ message: 'Server error', error: err.message });
     }
 };

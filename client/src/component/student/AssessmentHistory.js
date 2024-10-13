@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import SideBar from '../SideBar';
+import React, { useState, useEffect, Suspense, startTransition } from 'react';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
+import Loading from '../Loading';
+
 const AssessmentHistory = () => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { id } = useParams();
-  // const studentId = localStorage.getItem('id')
-  console.log(id);
+  const id = localStorage.getItem('id');
+
   useEffect(() => {
     const fetchAssessmentHistory = async () => {
       try {
@@ -23,13 +22,14 @@ const AssessmentHistory = () => {
           },
         };
 
-        // Replace with your API endpoint
         const response = await axios.get(`http://localhost:4000/api/getAssessment/${id}`, config);
-        setHistory(response.data); // Assuming the response data is an array of assessments
-        console.log(response.data);
+        startTransition(() => {
+          setHistory(response.data);
+        });
+        setError(null);
       } catch (err) {
-        setError('Failed to load history');
         console.error('Error fetching assessment history:', err);
+        setError(err.response?.data?.message || 'Failed to load history');
       } finally {
         setLoading(false);
       }
@@ -38,36 +38,48 @@ const AssessmentHistory = () => {
     fetchAssessmentHistory();
   }, [id]);
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>{error}</p>;
-  const fullName = localStorage.getItem('fullName')
+  const fullName = localStorage.getItem('fullName');
   const emailId = localStorage.getItem('emailId');
+
+  if (error) return <p className="text-red-500">{error}</p>;
+
+  const attemptedHistories = history.filter(histories => histories.attempted === true);
+
   return (
-    <div className="flex flex-row h-screen">
-      <aside className="w-50">
-        <SideBar />
-      </aside>
-      <div className="w-full m-5 p-20 bg-white rounded-lg shadow-lg">
-        <h1 className="text-3xl font-bold mb-6">Assessment History</h1>
+    <div className="w-full flex flex-row h-screen">
+      <div className="w-full p-4 bg-white rounded-lg shadow-lg flex flex-col m-2 overflow-y-auto h-[calc(100vh-1.2rem)]">
+        <h1 className="text-2xl text-center font-bold mb-2">Assessment History</h1>
         <div className="space-y-4">
-          {history.length === 0 ? (
-            <p>No history found.</p>
-          ) : (
-            Array.isArray(history) && history.map(histories => (
-              <div key={histories.studentId} className="bg-white shadow-md rounded-lg p-4">
-                <h2 className="text-xl font-semibold mb-2">Student Name: {fullName}</h2>
-                <h2 className="text-xl font-semibold mb-2">Email : {emailId}</h2>
-                <p className='my-2'>{new Date(histories.createdAt).toLocaleDateString()}</p>
-                <li key={histories.id} className="mt-5">
-                  <span className="font-medium text-xl">Assessment Title:  {histories.assessmentId.title}</span>
-                  <span className="ml-4 font-medium text-xl">Score: {histories.score || 'N/A'}</span>
-                  <span className="ml-4 font-medium text-xl">Feedback: {histories.feedback || 'No feedback'}</span>
-                </li>
-
-              </div>
-
-            ))
-          )}
+          <Suspense fallback={<Loading />}>
+            {loading ? (
+              <Loading />
+            ) : (
+              attemptedHistories.length > 0 ? (
+                attemptedHistories.map(histories => (
+                  <div key={histories._id} className="bg-white shadow-md rounded-lg p-4">
+                    <h2 className="text-lg font-semibold mb-2">Student Name: {fullName}</h2>
+                    <h2 className="text-lg font-semibold mb-2">Email: {emailId}</h2>
+                    <h2 className='ml-4 font-small text-lg'>Date: {new Date(histories.createdAt).toLocaleDateString()}</h2>
+                    <span className="mt-5">
+                      {histories.assessmentId ? (
+                        <>
+                          <span className="ml-4 font-small text-lg">Assessment Title: {histories.assessmentId.title || 'N/A'}</span>
+                          <span className="ml-4 font-small text-lg">Score: {histories.score}/{histories.total || 0}</span>
+                          <span className="ml-4 font-small text-lg">Feedback: {histories.feedback || 'No feedback'}</span>
+                        </>
+                      ) : (
+                        <span className="ml-4 font-small text-lg">Assessment information not available</span>
+                      )}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="flex justify-center items-center h-full">
+                  <h2 className="text-lg text-gray-500">No assessment history found</h2>
+                </div>
+              )
+            )}
+          </Suspense>
         </div>
       </div>
     </div>

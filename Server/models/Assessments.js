@@ -4,7 +4,7 @@ const assessmentSchema = Schema({
     title: { type: String, required: true },
     description: { type: String, required: true },
     dueDate: { type: Date, required: true },
-    createdBy: { type: Schema.Types.ObjectId, ref: 'Users'},
+    createdBy: { type: Schema.Types.ObjectId, ref: 'User'},
     createdAt: { type: Date, default: Date.now }, // Automatically set to the current date
     isActive: { type: Boolean, default: true } // Default to true, indicating that the assessment is active
 });

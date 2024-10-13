@@ -1,5 +1,5 @@
 const express = require('express');
-const { createAssessment, updateAssessment, getAssessmentsByCreator, getAssessment, getAssessmentByIds} = require('../controller/Assessments');
+const { createAssessment, updateAssessment, getAssessmentsByCreator, getAssessment, getAssessmentByIds, deleteAssessmentById} = require('../controller/Assessments');
 const {getQuestionsByAssessmentId} = require('../controller/Assessments')
 const {authenticate, authorize} = require('../middlware/authenticate')
 const router = express.Router();
@@ -19,5 +19,7 @@ router.get('/getQuestionByAssessmentId/:id', authenticate, authorize(['teacher',
 
 
 router.put('/updateAssessment/:id', authenticate, authorize(['teacher']), updateAssessment);
+
+router.delete('/deleteAssessmentById', authenticate, authorize(['teacher']), deleteAssessmentById)
 
 module.exports = router;

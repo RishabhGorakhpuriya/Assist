@@ -8,7 +8,9 @@ const userSchema = new Schema({
     salt: { type: String, required: true },
     role: { type: String, enum: ['student', 'teacher'], required: true },
     isActive: { type: Boolean, default: true },
-    createdAt: { type: Date, default: Date.now }
+    createdAt: { type: Date, default: Date.now },
+    resetToken: { type: String, default: null },
+    resetTokenExpiry: { type: Date, default: null },
 });
 
 // Virtual field for id

@@ -9,10 +9,14 @@ import {
     FiPieChart,
     FiShoppingCart,
     FiHeart,
-    FiSettings
+    FiSettings,
 } from "react-icons/fi";
+import { AiOutlineBank } from "react-icons/ai";
 import '../assesst/SideBar.css';
+import Tooltip from '@mui/material/Tooltip';
+import IconButton from '@mui/material/IconButton';
 import { Link } from 'react-router-dom'
+
 // Define the sidebar links for teachers and students
 const allLinks = {
     teacher: [
@@ -24,7 +28,7 @@ const allLinks = {
         {
             title: "User",
             icon: <FiUser />,
-            link: "/userprofile"
+            link: `/userprofile/${localStorage.getItem("id")}`
         },
         {
             title: "Create New Assessment",
@@ -35,21 +39,10 @@ const allLinks = {
             title: "Student List",
             icon: <FiPieChart />,
             link: "/studentList"
-        },
-        {
-            title: "Order",
-            icon: <FiShoppingCart />,
-            link: "#"
-        },
-        {
-            title: "Saved",
-            icon: <FiHeart />,
-            link: "#"
-        },
-        {
-            title: "Setting",
-            icon: <FiSettings />,
-            link: "#"
+        }, {
+            title: "Question Bank",
+            icon: <AiOutlineBank />,
+            link: "/question-category"
         }
     ],
     student: [
@@ -66,17 +59,30 @@ const allLinks = {
         {
             title: "User",
             icon: <FiUser />,
-            link: "/userprofile"
-        },
-        {
-            title: "Saved",
-            icon: <FiHeart />,
-            link: "#"
+            link: `/userprofile/${localStorage.getItem("id")}`
         }
     ]
 };
 
 
+function BreakWord(name) {
+
+    if (name.length > 10) {
+        var words = name.split(' '); // Split the name into words
+        return (
+            <>
+
+                {words.map((word, index) => (
+                    <span key={index}>
+                        {word}
+                        {index < words.length - 1 && <br />}
+                    </span>
+                ))}
+            </>
+        );
+    }
+    return name;
+}
 const SideBar = () => {
     const [activeBar, setActiveBar] = useState(false);
     const nevigate = useNavigate();
@@ -87,14 +93,18 @@ const SideBar = () => {
     const links = allLinks[UserRole] || [];
 
     const fullName = localStorage.getItem('fullName');
-    console.log(fullName);
+    const newName = fullName ? fullName.toLocaleUpperCase() : '';
     const handleLogout = () => {
-        localStorage.removeItem('token');
+        localStorage.clear();
         nevigate("/login");
     }
     return (
         <aside className={`sidebar ${activeBar ? "active" : ""}`}>
+
             <header className="header">
+                <div className='user-name-wrapper'>
+                    <img src="logo.png" style={{ width: '50px' }} />
+                </div>
                 <button
                     className="toggle-sidebar-btn"
                     onClick={() => setActiveBar(!activeBar)}
@@ -111,16 +121,15 @@ const SideBar = () => {
                             <span className="link-name">{title}</span>
                         </Link>
                         <span className="tooltip">{title}</span>
-                       
+
                     </li>
                 ))}
             </ul>
             <button className="logout-btn" >
-                <btton className="link-name " onClick={handleLogout}> <CiLogout size={20}  /></btton>
-                <div className="user-name-wrapper">
-
-                    <span className="user-name">{fullName}</span>
-                </div>
+                <Tooltip className='text-sm' title="Logout">
+                    <span className="link-name" onClick={handleLogout}><CiLogout size={30} /></span>
+                </Tooltip>
+                <span className='user-name-wrapper'>{BreakWord(newName)}</span>
             </button>
         </aside>
     );

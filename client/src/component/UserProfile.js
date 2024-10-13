@@ -1,82 +1,132 @@
-import React from 'react';
-import { FaEdit } from 'react-icons/fa';
+import React, { useState, useEffect, startTransition } from 'react';
 import SideBar from './SideBar';
+import axios from 'axios';
+import { useGlobalContext } from './context/context';
+import { FaUser, FaRegClock, FaCheckCircle, FaTasks } from 'react-icons/fa';
+import Box from '@mui/material/Box';
+import Fab from '@mui/material/Fab';
+import Loading from './Loading';
 
 const UserProfile = () => {
-    // Example user data
-    const fullName = localStorage.getItem('fullName');
-    const emailId = localStorage.getItem('emailId');
-    const Role = localStorage.getItem('role');
-    const date = localStorage.getItem('date');
-    return (
-        <div className="flex flex-row h-screen">
-            <aside className="w-50">
-                <SideBar />
-            </aside>
-            <div className="w-full m-5 p-20 bg-white rounded-lg shadow-lg ">
-                {/* <div className="min-h-screen bg-gray-100">
-                    <div className="max-w-6xl mx-auto p-6 bg-white shadow-lg rounded-lg mt-6"> */}
-                {/* Profile Header */}
-                <div className="flex items-center space-x-6">
-                    <img
-                        src={"https://via.placeholder.com/150"}
-                        alt="Profile"
-                        className="w-24 h-24 rounded-full object-cover border-4 border-blue-500"
-                    />
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">{fullName}</h1>
-                        <p className="text-2xl text-gray-600">{emailId}</p>
-                        <p className="text-gray-700 mt-2">{}</p>
-                        <button className="mt-4 text-blue-500 flex items-center space-x-2 hover:underline">
-                            <FaEdit />
-                            <span>Edit Profile</span>
-                        </button>
-                    </div>
-                </div>
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const { assessments } = useGlobalContext();
+    const [alert, setAlert] = useState({ message: '', severity: '' });
+    useEffect(() => {
+        const getUser = async () => {
+            setLoading(true);
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('No token found');
+                }
 
-                {/* User Details */}
-                <div className="mt-10">
-                    <h2 className="text-2xl font-semibold text-gray-800">Details</h2>
-                    <div className="mt-4 space-y-4">
-                        {/* Example user details */}
-                        <div className="flex justify-start">
-                            <span className=" text-4xl text-gray-600">Username:</span>
-                            <span className="text-4xl font-semibold mx-4">{fullName}</span>
+                const config = {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                };
+
+                const id = localStorage.getItem('userId');
+
+                const response = await axios.get(`http://localhost:4000/auth/${id}`, config);
+
+                startTransition(() => {
+                    setUser(response.data);
+                });
+
+            } catch (err) {
+                console.error('Error fetching user data:', err);
+                setError(err);
+            } finally {
+                startTransition(() => {
+                    setLoading(false);
+                });
+            }
+        };
+
+        getUser();
+    }, []);
+
+    if (error) return <div>Error: {error.message}</div>;
+
+    // function capitalizeFirstLetter(string) {
+    //     return string.charAt(0).toUpperCase() + string.slice(1);
+    // }
+
+    const completedCount = assessments.filter(assess => assess.attempted).length;
+
+    return (
+        <div className="w-full flex flex-row h-screen">
+            <div className="w-full p-4 bg-white rounded-lg shadow-lg flex flex-col m-3 overflow-y-auto h-[calc(100vh-1.5rem)]">
+                {loading ? (<Loading />) : (
+                    <div>
+                        <div className="flex items-center space-x-6 border-b pb-6 mb-2">
+                            <div>
+                                <h1 className="text-2xl font-bold text-gray-900">{user.fullName}</h1>
+                                <p className="text-xl text-gray-600">{user.emailId}</p>
+                            </div>
                         </div>
-                        <div className="flex justify-start">
-                            <span className="text-4xl text-gray-600">Role : </span>
-                            <span className="text-4xl font-semibold mx-4">{Role}</span>
-                        </div>
-                        <div className="flex justify-start">
-                            <span className="text-4xl text-gray-600">Joined:</span>
-                            <span className="text-4xl font-semibold mx-4">{new Date(date).toLocaleDateString()}</span>
+
+                        <div className="p-4">
+                            <h2 className="text-xl font-semibold text-gray-800">Details</h2>
+                            <div className="mt-4 space-y-3">
+                                <div className="flex items-center bg-gray-100 p-4 rounded-lg shadow hover:bg-gray-200 transition-transform duration-300 hover:scale-103">
+                                    <Box className="float-right">
+                                        <Fab size="small" color="secondary" aria-label="edit">
+                                            <FaUser className="text-gray-600" color='white' />
+                                        </Fab>
+                                    </Box>
+                                    <span className="text-gl text-gray-600 ml-3 mr-3">Username:</span>
+                                    <span className="text-gl font-semibold text-gray-800">{user.fullName}</span>
+                                </div>
+                                <div className="flex items-center bg-gray-100 p-4 rounded-lg shadow hover:bg-gray-200 transition-transform duration-300 hover:scale-105">
+                                    <Box className="float-right">
+                                        <Fab size="small" color="secondary" aria-label="edit">
+                                            <FaTasks className="text-gray-600" color='white' />
+                                        </Fab>
+                                    </Box>
+
+                                    <span className="text-gl text-gray-600 ml-3 mr-3">Role:</span>
+                                    <span className="text-gl font-semibold text-gray-800">{user.role}</span>
+                                </div>
+                                <div className="flex items-center bg-gray-100 p-4 rounded-lg shadow hover:bg-gray-200 transition-transform duration-300 hover:scale-105">
+                                    <Box className="float-right">
+                                        <Fab size="small" color="secondary" aria-label="edit">
+                                            <FaRegClock className="text-gray-600 " color='white' />
+                                        </Fab>
+                                    </Box>
+                                    <span className="text-gl text-gray-600 ml-3 mr-3">Joined:</span>
+                                    <span className="text-gl font-semibold text-gray-800">{new Date(user.createdAt).toLocaleDateString()}</span>
+                                </div>
+                                <div className="flex items-center bg-gray-100 p-4 rounded-lg shadow hover:bg-gray-200 transition-transform duration-300 hover:scale-105">
+                                    <Box className="float-right">
+                                        <Fab size="small" color="secondary" aria-label="edit">
+                                            <FaTasks className="text-gray-600 " color='white' />
+                                        </Fab>
+                                    </Box>
+
+                                    <span className="text-gl text-gray-600 ml-3 mr-3">Total Tests:</span>
+                                    <span className="text-gl font-semibold text-gray-800">{assessments.length}</span>
+                                </div>
+                                <div className="flex items-center bg-gray-100 p-4 rounded-lg shadow hover:bg-gray-200 transition-transform duration-300 hover:scale-105">
+                                    <Box className="float-right">
+                                        <Fab size="small" color="secondary" aria-label="edit">
+                                            <FaCheckCircle className="text-gray-600" color='white' />
+                                        </Fab>
+                                    </Box>
+
+                                    <span className="text-gl text-gray-600 ml-3 mr-3">Tests Completed:</span>
+                                    <span className="text-gl font-semibold text-gray-800">{completedCount}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
-        //     </div>
-        // </div>
     );
 };
 
 export default UserProfile;
-
-
-//  {/* Additional Sections
-//                 <div className="mt-6">
-//                     <h2 className="text-2xl font-semibold text-gray-800">Recent Activity</h2>
-//                     <div className="mt-4">
-//                         {/* Example activity items */}
-//                         <div className="bg-gray-50 p-4 rounded-lg shadow-sm mb-4">
-//                             <h3 className="text-lg font-semibold text-gray-700">Completed Project X</h3>
-//                             <p className="text-gray-600">Completed the final milestone for Project X and submitted the report.</p>
-//                             <span className="text-gray-500 text-sm">2 days ago</span>
-//                         </div>
-//                         <div className="bg-gray-50 p-4 rounded-lg shadow-sm mb-4">
-//                             <h3 className="text-lg font-semibold text-gray-700">Started New Course</h3>
-//                             <p className="text-gray-600">Enrolled in an advanced React course to improve frontend skills.</p>
-//                             <span className="text-gray-500 text-sm">1 week ago</span>
-//                         </div>
-//                     </div>
-//                 </div> */}

@@ -1,14 +1,15 @@
 .sidebar {
   position: relative;
-  width: 25rem;
+  max-width: 20rem;
   height: 100vh;
-  padding: 2rem;
+  padding: 1.2rem;
+  width: 100%;
   background-color: var(--dark-blue);
   transition: width 0.3s ease-in-out;
 }
 
 .sidebar.active {
-  width: 8rem;
+  width: 6rem;
 }
 
 .sidebar .header {
@@ -39,11 +40,11 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 4rem;
-  height: 4rem;
+  width: 3rem;
+  height: 3rem;
   color: var(--light-blue);
   background-color: var(--dark-purple);
-  font-size: 2rem;
+  font-size: 1.5rem;
   border-radius: var(--rounded-md);
 }
 
@@ -53,7 +54,7 @@
 
 .sidebar .list-items .item {
   position: relative;
-  margin-bottom: 1rem;
+  /* margin-bottom: 1rem; */
 }
 
 .sidebar .list-items .item .link {
@@ -76,12 +77,13 @@
   place-content: center;
   min-width: 4rem;
   min-height: 4rem;
-  font-size: 1.6rem;
+  font-size: 1.5rem;
 }
 
 .sidebar .list-items .item .link .link-name {
-  font-size: 1.3rem;
+  font-size: 1rem;
   white-space: nowrap;
+
   transition: opacity 0.3s ease-in-out;
 }
 
@@ -92,17 +94,19 @@
 .sidebar.active .list-items .item .link:hover~.tooltip {
   opacity: 1;
   top: 12%;
+  z-index: 1;
 }
 
 .sidebar .list-items .item .tooltip {
   opacity: 0;
   position: absolute;
   top: -12%;
-  right: -13rem;
-  width: 10rem;
-  font-size: 1.2rem;
+  right: -7rem;
+  width: 5rem;
+  font-size: 0.8rem;
+  z-index: 1;
   text-align: center;
-  line-height: 3rem;
+  line-height: 2rem;
   color: var(--light-blue);
   background-color: var(--dark-blue);
   border-radius: var(--rounded-sm);
@@ -123,13 +127,17 @@
   border-radius: var(--rounded-xs);
   transform: rotate(45deg);
 }
+span.link-name{
+  padding: 10px;
+  margin-left: 10px;
+}
+
 .sidebar .logout-btn .link-name:hover{
   background-color: #fff;
   color: #000;
-  width: 50px;
-  padding: 10px;
   border-radius: 5px;
 }
+
 .sidebar .logout-btn {
   position: absolute;
   left: 0;
@@ -137,12 +145,12 @@
   display: flex;
   align-items: center;
   width: 100%;
-  height: 8rem;
-  padding: 0.5rem 2rem;
+  height: 5rem;
   color: var(--light-blue);
   background-color: var(--dark-purple);
   white-space: nowrap;
   opacity: 1;
+  justify-content: space-evenly;
 }
 
 .sidebar .logout-btn .user-photo-container {
@@ -159,16 +167,15 @@
 
 
 
-.sidebar .logout-btn .user-name-wrapper {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  margin-left: 3rem;
-  font-size: 1.8rem;
+.sidebar .user-name-wrapper {
+  justify-content: center;
+  /* display: none; */
+  font-size: 1rem;
   font-weight: bold;
   transition: opacity 0.3s ease-in-out;
 }
 
-.sidebar.active .logout-btn .user-name-wrapper {
+.sidebar.active .user-name-wrapper {
   opacity: 0;
 }
+

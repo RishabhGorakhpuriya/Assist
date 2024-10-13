@@ -5,6 +5,7 @@ const questionSchema = new Schema({
     options: [{ type: String }], // Array of options
     answer: { type: String },
     questionType: { type: String },
+    topic : {type:String},
     isActive: { type: Boolean, default: true },
     createdAt: { type: Date, default: Date.now }
     // createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true }

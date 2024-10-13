@@ -9,6 +9,6 @@ router.post('/addQuestionInAssessment', authenticate, authorize(['teacher']),  a
 
 router.put('/updateAssessmentQuestion/:id', authenticate, authorize(['teacher']), updateAssessmentQuestion);
 
-router.delete('/deleteAssessmentQuestion/:id', authenticate, authorize(['teacher']), deleteAssessmentQuestion)
+router.delete('/deleteAssessmentQuestion', authenticate, authorize(['teacher']), deleteAssessmentQuestion)
 
 module.exports = router;

@@ -4,10 +4,12 @@ const { Schema } = mongoose;
 // Define the schema
 const studentAssessmentSchema = new Schema({
     assessmentId: { type: Schema.Types.ObjectId, ref: 'Assessment', required : true },
-    studentId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    studentId: { type: Schema.Types.ObjectId, ref: 'User', required : true },
     feedback: { type: String},
     score: { type: Number},
-    createdAt: { type: Date, default: Date.now }
+    total:{type : Number},
+    createdAt: { type: Date, default: Date.now },
+    attempted : {type : Boolean, default : false}
 });
 
 // Virtual field for ID

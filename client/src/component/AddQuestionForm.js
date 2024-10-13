@@ -1,8 +1,22 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import SideBar from './SideBar';
-import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
+import Alert from '@mui/material/Alert';
+const optionsList = [
+  { id: 1, name: "General Knowledge" },
+  { id: 2, name: "Mathematics" },
+  { id: 3, name: "Science" },
+  { id: 4, name: "Technology" },
+  { id: 5, name: "English" },
+  { id: 6, name: "Arts" },
+  { id: 7, name: "Business and Economics" },
+  { id: 8, name: "Biology" },
+  { id: 9, name: "Chemistry" },
+  { id: 10, name: "Physics" },
+  { id: 11, name: "Coding" }
+];
+
 const AddQuestionForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -14,7 +28,7 @@ const AddQuestionForm = () => {
   const [topic, setTopic] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [error, setError] = useState('');
-
+  const [alertseverity, setAlertSeverity] = useState('success');
   const handleOptionChange = (index, value) => {
     const newOptions = [...options];
     newOptions[index] = value;
@@ -23,110 +37,100 @@ const AddQuestionForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(''); // Clear previous errors
 
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('No token found');
       }
-      console.log(token);
+
       const config = {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       };
+
       const assessmentQuestionData = {
         question,
         options,
         answer,
         questionType,
+        topic,
         isActive,
         createdBy: 'user_id_here', // Replace with actual user ID
         assessment: id
       };
 
-      // Data for the question table
-      const questionData = {
-        question,
-        options,
-        answer,
-        questionType,
-        isActive,
-        // createdBy: 'user_id_here' // Replace with actual user ID
-      };
-
-      console.log(questionData, id)
-      // http://localhost:4000/api/addquestions
-
       const response = await axios.post(`http://localhost:4000/api/assessmentQuestion/addQuestionInAssessment`, assessmentQuestionData, config);
-      console.log('Question added:', response);
+      console.log('Question added:', response.data);
 
-      await axios.post(`http://localhost:4000/api/addquestions`, questionData, config);
-      console.log('Question added to question table');
-      alert("Question Added Successfully");
-      if (response.statusText == "Created") {
-        navigate(`/assessment/${id}`);// Navigate to home page upon successful signup
-      }
-      // Clear form or redirect
+      // alert("Question Added Successfully");
+      setAlertSeverity("Question Added Successfully")
+      navigate(`/assessment/${id}`); // Navigate upon successful addition
+      setTimeout(()=>{
+        setAlertSeverity("");
+      }, 3000)
     } catch (error) {
       console.error('Error adding question:', error);
-      setError('Failed to add question');
+      setAlertSeverity("Failed to add question")
+      setError(error.response?.data?.message || 'Failed to add question');
+      setTimeout(()=>{
+        setAlertSeverity('');
+      })
     }
   };
 
   return (
-    <div className="flex flex-row h-screen">
-      <aside className="w-50">
-        <SideBar />
-      </aside>
-      <div className="w-full m-5 p-20 bg-white rounded-lg shadow-lg ">
-        <h2 className="text-3xl font-semibold mb-4">Add New Question</h2>
-        {error && <p className="text-red-500 mb-4">{error}</p>}
+    <div className="w-full flex flex-row h-screen">
+      <div className="w-full p-3 bg-white rounded-lg shadow-lg flex flex-col m-3 overflow-y-auto h-[calc(100vh-1.5rem)]">
+        <h2 className="text-2xl font-semibold mb-2">Add New Question</h2>
+        {error &&  <Alert severity={alertseverity}>{error}</Alert>}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="question" className="block text-gray-800 mb-2">Question</label>
+            <label htmlFor="question" className="block text-sm text-gray-800 mb-2">Question</label>
             <textarea
               id="question"
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows="3"
+              className="w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows="2"
               required
             />
           </div>
           <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Options</label>
+            <label className="block text-sm text-gray-700 mb-2">Options</label>
             {options.map((option, index) => (
               <input
                 key={index}
                 type="text"
                 value={option}
                 onChange={(e) => handleOptionChange(index, e.target.value)}
-                className="w-full p-3 mb-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full text-sm mb-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder={`Option ${index + 1}`}
                 required
               />
             ))}
           </div>
           <div className="mb-4">
-            <label htmlFor="answer" className="block text-gray-700 mb-2">Answer</label>
+            <label htmlFor="answer" className="block text-sm text-gray-700 mb-2">Answer</label>
             <input
               id="answer"
               type="text"
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Correct Answer"
               required
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="questionType" className="block text-gray-700 mb-2">Question Type</label>
+            <label htmlFor="questionType" className="block text-sm text-gray-700 mb-2">Question Type</label>
             <select
               id="questionType"
               value={questionType}
               onChange={(e) => setQuestionType(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="MCQ">MCQ</option>
               <option value="True/False">True/False</option>
@@ -134,16 +138,19 @@ const AddQuestionForm = () => {
             </select>
           </div>
           <div className="mb-4">
-            <label htmlFor="topic" className="block text-gray-700 mb-2">Topic</label>
-            <input
+            <label htmlFor="topic" className="block text-sm text-gray-700 mb-2">Topic</label>
+            <select
               id="topic"
-              type="text"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Topic"
+              className="w-full text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
-            />
+            >
+              <option value="" disabled>Select Topic</option>
+              {optionsList.map(option => (
+                <option key={option.id} value={option.name}>{option.name}</option>
+              ))}
+            </select>
           </div>
           <div className="mb-4">
             <label className="inline-flex items-center">
@@ -153,12 +160,12 @@ const AddQuestionForm = () => {
                 onChange={(e) => setIsActive(e.target.checked)}
                 className="form-checkbox text-blue-500"
               />
-              <span className="ml-2 text-gray-700">Active</span>
+              <span className="ml-2 text-gray-700 text-sm">Active</span>
             </label>
           </div>
           <button
             type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="bg-blue-500 text-sm text-white px-3 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             Add Question
           </button>

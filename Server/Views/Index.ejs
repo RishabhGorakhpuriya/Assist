@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="Web site created using create-react-app" />
+
+    <title>React App</title>
+
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #e2e2e2 0%, #ffffff 100%);
+            font-family: 'Arial', sans-serif;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        h3 {
+            font-size: 24px;
+            font-weight: 500;
+            color: #4a4a4a;
+            text-align: center;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .text-wrapper {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        label {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input {
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: #4f46e5;
+            /* Indigo */
+            outline: none;
+            box-shadow: 0 0 5px rgba(79, 70, 229, 0.5);
+        }
+
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4f46e5;
+            /* Indigo */
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #4338ca;
+            /* Darker Indigo */
+        }
+
+        button:focus-visible {
+            outline: 2px solid #4f46e5;
+            outline-offset: 2px;
+        }
+
+        .error-container {
+            margin: 10px 0;
+        }
+
+        .error {
+            font-size: 14px;
+            color: red;
+        }
+    </style>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const form = document.querySelector("form");
+            const password = document.getElementById("password");
+            const conformPassword = document.getElementById("conformPassword");
+
+            form.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                let valid = true;
+                let errorMessages = [];
+
+                // Clear previous error messages
+                const existingErrors = document.querySelectorAll(".error-container");
+                existingErrors.forEach(errorContainer => errorContainer.remove());
+
+                // Check if fields are empty
+                if (!password.value) {
+                    valid = false;
+                    errorMessages.push("Password is required.");
+                }
+
+                if (!conformPassword.value) {
+                    valid = false;
+                    errorMessages.push("Confirm Password is required.");
+                }
+
+                // Check if passwords match
+                if (password.value !== conformPassword.value) {
+                    valid = false;
+                    errorMessages.push("Passwords do not match.");
+                }
+
+                if (!valid) {
+                    displayErrors(errorMessages);
+                    return; // Prevent submission if not valid
+                }
+
+                // Submit the form to the server
+                const id = "<%= userId %>"; // Replace with actual user ID
+                const token = "<%= token %>"; // Replace with actual token
+                try {
+                    const response = await fetch(`http://localhost:4000/auth/reset-password/${id}/${token}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ password: password.value })
+                    });
+                    const data = await response.json();
+                    alert(data.message);
+                    // if (response.ok) {
+                    //     // Successful response
+                    //     setTimeout(() => {
+                    //         window.location.href = "http://localhost:3000/login"; // Redirect to login page
+                    //     }, 500); // Optional delay for user feedback
+                    // } else {
+                    //     const errorData = await response.json();
+                    //     displayErrors([errorData.message || "Failed to reset password."]);
+                    // }
+                } catch (error) {
+                    console.error("Error:", error);
+                    displayErrors(["Server error. Please try again later."]);
+                }
+            });
+
+            function displayErrors(errors) {
+                const errorContainer = document.createElement("div");
+                errorContainer.className = "error-container";
+
+                errors.forEach(error => {
+                    const errorElement = document.createElement("div");
+                    errorElement.className = "error";
+                    errorElement.textContent = error;
+                    errorContainer.appendChild(errorElement);
+                });
+
+                form.insertBefore(errorContainer, form.firstChild);
+            }
+        });
+    </script>
+</head>
+
+<body>
+    <div class="card">
+        <h3 class="mt-10">
+            <%=email%>
+        </h3>
+        <form action="" method="POST">
+            <div class="text-wrapper">
+                <label for="password">
+                    Create New Password
+                </label>
+                <input class="input-field" id="password" name="password" type="password" required
+                    autoComplete="password" />
+            </div>
+
+            <div class="text-wrapper">
+                <label for="conformPassword">
+                    Confirm Password
+                </label>
+                <input class="input-field" id="conformPassword" name="conformPassword" type="password" required
+                    autoComplete="current-password" />
+            </div>
+
+            <div>
+                <button type="submit">
+                    Save
+                </button>
+            </div>
+        </form>
+    </div>
+</body>
+
+</html>

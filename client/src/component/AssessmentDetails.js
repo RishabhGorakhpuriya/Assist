@@ -1,18 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense, lazy, startTransition } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import SideBar from './SideBar';
-import { MdDelete } from "react-icons/md";
+import Checkbox from '@mui/material/Checkbox';
+import Box from '@mui/material/Box';
+import Fab from '@mui/material/Fab';
+import AddIcon from '@mui/icons-material/Add';
+import { pink } from '@mui/material/colors';
+import DeleteIcon from '@mui/icons-material/Delete';
+import Alert from '@mui/material/Alert';
+const Loading = lazy(() => import('./Loading'));
+
+
+const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
 
 const AssessmentDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [questions, setQuestions] = useState([]); // Ensure initial state is an array
+  const [questions, setQuestions] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const questionsPerPage = 4;
-
+  const [selectedQuestions, setSelectedQuestions] = useState([]);
+  const [alert, setAlert] = useState({ message: '', severity: '' });
   useEffect(() => {
     const fetchAssessmentData = async () => {
       setLoading(true);
@@ -28,8 +37,10 @@ const AssessmentDetails = () => {
           },
         };
 
-        const questionsResponse = await axios.get(`http://localhost:4000/api/assessmentQuestion/getQuestionByAssessmentId/${id}`, config);
-        setQuestions(questionsResponse.data);
+        const response = await axios.get(`http://localhost:4000/api/assessmentQuestion/getQuestionByAssessmentId/${id}`, config);
+        startTransition(() => {
+          setQuestions(response.data);
+        })
 
       } catch (error) {
         console.error('Error fetching assessment or questions:', error);
@@ -42,17 +53,12 @@ const AssessmentDetails = () => {
     fetchAssessmentData();
   }, [id]);
 
-  const handleImportQuestions = async () => {
-    try {
-      const response = await axios.post('http://localhost:4000/api/questions', { assessmentId: id });
-      setQuestions(prevQuestions => [...prevQuestions, ...response.data]);
-    } catch (error) {
-      console.error('Error importing questions:', error);
-      setError('Failed to import questions.');
+  const handleDeleteQuestion = async () => {
+    if (selectedQuestions.length === 0) {
+      setError('No questions selected for deletion.');
+      return;
     }
-  };
 
-  const handleDeleteQuestion = async (questionId) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -65,101 +71,105 @@ const AssessmentDetails = () => {
         },
       };
 
-      await axios.delete(`http://localhost:4000/api/assessmentQuestion/deleteAssessmentQuestion/${questionId}`, config);
-      console.log("Delete Successful");
+      const response = await axios.delete('http://localhost:4000/api/assessmentQuestion/deleteAssessmentQuestion', {
+        headers: config.headers,
+        data: { id: selectedQuestions },
+      });
 
-      // Update the state to remove the deleted question
-      setQuestions(prevQuestions => prevQuestions.filter(question => question.id !== questionId));
+      // Update the state to remove the deleted questions
+      setQuestions(prevQuestions => prevQuestions.filter(question => !selectedQuestions.includes(question.id)));
+      setSelectedQuestions([]); // Clear selected questions
+      setAlert({ message: 'Questions deleted successfully!', severity: 'success' });
+      setTimeout(() => {
+        setAlert({ message: '', severity: '' }); // Clear the alert
+      }, 3000);
     } catch (error) {
       console.error('Error in deletion', error);
-      setError('Failed to delete the question.');
+      setError('Failed to delete the selected questions. Please try again.');
+      setAlert({ message: 'Failed to delete the selected questions. Please try again.', severity: 'error' }); // Set alert
+      setTimeout(() => {
+        setAlert({ message: '', severity: '' }); // Clear the alert
+      }, 3000);
     }
   };
 
-  const handlePageChange = (newPage) => {
-    if (newPage < 1 || newPage > totalPages) return;
-    setCurrentPage(newPage);
+  const handleCheckboxChange = (id) => {
+    setSelectedQuestions(prevSelected => {
+      if (prevSelected.includes(id)) {
+        // If the ID is already selected, remove it
+        return prevSelected.filter(questionId => questionId !== id);
+      } else {
+        // If the ID is not selected, add it
+        return [...prevSelected, id];
+      }
+    });
   };
 
-  // Calculate pagination values
-  const totalPages = Array.isArray(questions) ? Math.ceil(questions.length / questionsPerPage) : 0;
-  const indexOfLastQuestion = currentPage * questionsPerPage;
-  const indexOfFirstQuestion = indexOfLastQuestion - questionsPerPage;
-  const currentQuestions = Array.isArray(questions) ? questions.slice(indexOfFirstQuestion, indexOfLastQuestion) : [];
-
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
-
   return (
-    <div className="flex flex-row h-screen">
-      <aside className="w-50">
-        <SideBar />
-      </aside>
-      <div className="w-full p-4 bg-white rounded-lg shadow-lg flex flex-col m-5">
-        <div className="flex justify-end gap-4 mb-4">
-          <button
-            onClick={() => navigate(`/addNewQuestion/${id}`)}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            Add Question
-          </button>
-          <button
-            onClick={handleImportQuestions}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            Import Questions From Question Bank
-          </button>
-        </div>
-        {currentQuestions.length > 0 ? (
-          <div>
-            <ul className="list-disc pl-5">
-              {Array.isArray(currentQuestions) && currentQuestions.map((question) => (
-                <li key={question.id} className="m-8 flex items-start">
-                  <MdDelete
-                    size={20}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      handleDeleteQuestion(question.id);
-                    }}
-                    className="cursor-pointer text-red-500 mr-4"
-                  />
-                  <div>
-                    <p className="text-2xl">{question.question}</p>
-                    <ul className="text-2xl list-disc pl-5">
-                      {question.options.map((option, index) => (
-                        <li key={index}>{option}</li>
-                      ))}
-                    </ul>
-                    <p className="text-2xl text-yellow-700">Answer: {question.answer}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-            <div className="flex justify-between mt-4">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
-              >
-                Previous
-              </button>
-              <span className="text-xl">
-                Page {currentPage} of {totalPages}
-              </span>
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
-              >
-                Next
-              </button>
+    <div className="w-full flex flex-row overflow-hidden">
+      <div className="w-full p-4 bg-white rounded-lg shadow-lg flex flex-col m-3 overflow-y-auto h-[calc(100vh-1.5rem)]">
+      {alert.message && <Alert severity={alert.severity}>{alert.message}</Alert>}
+        <Suspense fallback={<Loading />}>
+          {loading ? (
+            <div className="flex justify-center items-center h-full">
+             <Loading/>
             </div>
-          </div>
-        ) : (
-          <div className="mt-4 p-4 bg-yellow-100 rounded-lg">
-            <p className="text-yellow-600">No questions found for this assessment. Please add questions.</p>
-          </div>
-        )}
+          ) : (
+            <div className='h-full'>
+              <div className="flex justify-end gap-4 absolute right-10">
+                <Box className="" sx={{ '& > :not(style)': { m: 1 } }}>
+                  <Fab
+                    size='small'
+                    color="secondary"
+                    aria-label="delete"
+                    onClick={handleDeleteQuestion}
+                    disabled={selectedQuestions.length === 0}
+                  >
+                    <DeleteIcon />
+                  </Fab>
+                  <Fab size='small' color="primary" aria-label="add">
+                    <AddIcon onClick={() => navigate(`/addNewQuestion/${id}`)} />
+                  </Fab>
+                </Box>
+              </div>
+              {questions.length > 0 ? (
+                <ul className="list-disc pl-5 my-10 relative">
+                  {questions.map((question, index) => (
+                    <li key={question._id} className="m-8 flex items-star t">
+                      <div>
+
+                        <Checkbox className='p-5' {...label} sx={{
+                          color: pink[800],
+                          '&.Mui-checked': {
+                            color: pink[600],
+                          },
+                        }} checked={selectedQuestions.includes(question.id)} // This correctly checks if the specific question is selected
+                          onChange={() => handleCheckboxChange(question.id)} />
+
+                      </div>
+
+                      <span className="text-gl">{index + 1}</span>
+                      <div>
+                        <span className="text-gl">. {question.question}</span>
+                        <ul className="list-disc text-sm pl-4">
+                          {question.options.map((option, index) => (
+                            <li key={index}>{option}</li>
+                          ))}
+                        </ul>
+                        <p className="text-yellow-700">Answer: {question.answer}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className='flex justify-center items-center h-full'>
+                  <h1 className='text-2xl'>No questions found for this assessment. Please add questions.</h1>
+                </div>
+
+              )}
+            </div>
+          )}
+        </Suspense>
       </div>
     </div>
   );
